@@ -16,6 +16,12 @@ def run_code():
         return run_java_code(code)
     elif file_extension == 'py':
         return run_python_code(code)
+    elif file_extension == 'c':
+        return run_c_code(code)
+    elif file_extension == 'cpp':
+        return run_cpp_code(code)
+    elif file_extension == 'cs':
+        return run_csharp_code(code)
     else:
         return jsonify({'output': 'Unsupported file extension'})
 
@@ -41,6 +47,54 @@ def run_python_code(code):
         return jsonify({'output': result.stdout})
     except subprocess.CalledProcessError as e:
         return jsonify({'output': e.stderr})
+
+def run_c_code(code):
+    try:
+        with open('main.c', 'w') as c_file:
+            c_file.write(code)
+        result = subprocess.run(['gcc', 'main.c', '-o', 'main'], capture_output=True, text=True, check=True)
+        if result.returncode != 0:
+            return jsonify({'output': result.stderr})
+        result = subprocess.run(['./main'], capture_output=True, text=True, check=True)
+        return jsonify({'output': result.stdout})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'output': e.stderr})
+    finally:
+        os.remove('main.c')
+        if os.path.exists('main'):
+            os.remove('main')
+
+def run_cpp_code(code):
+    try:
+        with open('main.cpp', 'w') as cpp_file:
+            cpp_file.write(code)
+        result = subprocess.run(['g++', 'main.cpp', '-o', 'main'], capture_output=True, text=True, check=True)
+        if result.returncode != 0:
+            return jsonify({'output': result.stderr})
+        result = subprocess.run(['./main'], capture_output=True, text=True, check=True)
+        return jsonify({'output': result.stdout})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'output': e.stderr})
+    finally:
+        os.remove('main.cpp')
+        if os.path.exists('main'):
+            os.remove('main')
+
+def run_csharp_code(code):
+    try:
+        with open('Main.cs', 'w') as cs_file:
+            cs_file.write(code)
+        result = subprocess.run(['csc', 'Main.cs'], capture_output=True, text=True, check=True)
+        if result.returncode != 0:
+            return jsonify({'output': result.stderr})
+        result = subprocess.run(['mono', 'Main.exe'], capture_output=True, text=True, check=True)
+        return jsonify({'output': result.stdout})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'output': e.stderr})
+    finally:
+        os.remove('Main.cs')
+        if os.path.exists('Main.exe'):
+            os.remove('Main.exe')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
